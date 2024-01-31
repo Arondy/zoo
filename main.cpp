@@ -88,6 +88,7 @@ public:
     }
     void addAnimal(Animal &animal){
         animals.push_back(animal);
+        std::push_heap(animals.begin(), animals.end());
     }
     void removeAnimal(const Animal &animal){
         auto it = std::remove(animals.begin(), animals.end(), animal);
@@ -95,7 +96,6 @@ public:
     }
     int getDanger(){
         if (!animals.empty()){
-            std::make_heap(animals.begin(), animals.end());
             return animals[0].getDanger() * type;
         }
     }
@@ -108,6 +108,9 @@ public:
     void operator<<(string str);
 };
 
+class AlienCage;
+class AlienWaterCage;
+
 class ClosedCage : public Cage {
 public:
     ClosedCage(int id, const vector<Animal> &animals, float temp) : Cage(id, animals, temp, closed){}
@@ -115,9 +118,7 @@ public:
     void switchLight() const{
         cout << "You switched the light." << endl;
     }
-//    friend void operator~(){
-//
-//    }
+    AlienCage operator~();
 };
 
 class WaterCage : public ClosedCage {
@@ -144,6 +145,7 @@ public:
         wMap[pair.first] = pair.second;
         return *this;
     }
+    AlienWaterCage operator~();
 };
 
 class AlienCage : public ClosedCage {
@@ -163,6 +165,9 @@ public:
         aMap[pair.first] = pair.second;
         return *this;
     }
+    ClosedCage operator~() {
+        return ClosedCage(id, animals, temp);
+    }
 };
 
 class AlienWaterCage : public WaterCage, public AlienCage {
@@ -172,12 +177,22 @@ public:
                    WaterCage(id, animals, temp, waterLevel, wMap), AlienCage(id, animals, temp, aMap)
                    { WaterCage::type = alienWater; }
     ~AlienWaterCage() override = default;
+    WaterCage operator~() {
+        return WaterCage(WaterCage::id, WaterCage::animals, WaterCage::temp, 0, {});
+    }
 };
+
+AlienCage ClosedCage::operator~(){
+    return AlienCage(id, animals, temp, {});
+}
+
+AlienWaterCage WaterCage::operator~(){
+    return AlienWaterCage(id, animals, temp, waterLevel, wMap, {});
+}
 
 int main(){
     Animal a{"1", 3, 5};
     vector<Animal> an{a};
     OpenCage c{0, an, 45};
-    c.removeAnimal(a);
     return 1;
 }
